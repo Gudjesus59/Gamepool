@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom 3D Pool Game</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"></script>
+</head>
+<body>
+  <script>
+    // Scene, Camera, and Renderer
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // Pool Table
+    const tableGeometry = new THREE.BoxGeometry(10, 0.5, 5);
+    const tableMaterial = new THREE.MeshLambertMaterial({ color: 0x228b22 });
+    const table = new THREE.Mesh(tableGeometry, tableMaterial);
+    table.position.y = -0.3; // Slightly below the balls
+    scene.add(table);
+
+    // Physics World
+    const world = new CANNON.World();
+    world.gravity.set(0, -9.82, 0);
+
+    // Pool Balls
+    const ballGeometry = new THREE.SphereGeometry(0.2, 32, 32);
+    const ballMaterial = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const cueBall = new THREE.Mesh(ballGeometry, ballMaterial);
+    scene.add(cueBall);
+
+    // Physics for Cue Ball
+    const ballBody = new CANNON.Body({
+      mass: 1,
+      shape: new CANNON.Sphere(0.2),
+      position: new CANNON.Vec3(0, 0.2, 0),
+    });
+    world.addBody(ballBody);
+
+    // Lighting
+    const light = new THREE.PointLight(0xffffff, 1, 100);
+    light.position.set(5, 10, 5);
+    scene.add(light);
+
+    const ambientLight = new THREE.AmbientLight(0x404040); // Soft light
+    scene.add(ambientLight);
+
+    // Camera Position
+    camera.position.z = 12;
+
+    // Handle Clicks
+    window.addEventListener('click', () => {
+      ballBody.velocity.set(Math.random() * 5 - 2.5, 0, Math.random() * 5 - 2.5); // Random shot
+    });
+
+    // Animate the Scene
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // Update Physics
+      world.step(1 / 60);
+      cueBall.position.copy(ballBody.position);
+      cueBall.quaternion.copy(ballBody.quaternion);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+</body>
+</html>
